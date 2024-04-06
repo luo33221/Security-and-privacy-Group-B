@@ -1,0 +1,41 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block title %}Data{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Add Data</h1>
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <form action="{{ url_for('add_data') }}" method="POST">
+        <div class="mb-3">
+            <label class="form-label">patientname</label>
+            <input type="text" class="form-control" name="patientname">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">age</label>
+            <input type="text" class="form-control" name="age">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">gender</label>
+            <input type="text" class="form-control" name="gender">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">doctor</label>
+            <input type="text" class="form-control" name="doctor">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">illness</label>
+            <input type="text" class="form-control" name="illness">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Diagnosis</label>
+            <input type="text" class="form-control" name="diagnosis">
+        </div>
+        <div class="mb-3">
+            <button class="btn btn-primary" type="submit">Add Data</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

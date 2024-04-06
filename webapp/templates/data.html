@@ -1,0 +1,153 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block title %}Data{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>medical case</h1>
+    <div class="row">
+        <div class="col-md-7">
+            <table class="table table-striped" id="data-table">
+                <thead>
+                    <tr>
+                        {% for column in data.columns %}
+                            <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data.itertuples() %}
+                        <tr>
+                            {% for value in row[1:] %}
+                                <td contenteditable="true" data-id="{{ loop.index }}" data-column="{{ loop.index0 }}">{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <h1>User Data</h1>
+    <div class="row">
+        <div class="col-md-7">
+            <table class="table table-striped" id="userdata-table">
+                <thead>
+                    <tr>
+                        {% for column in userdata.columns %}
+                            <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in userdata.itertuples() %}
+                        <tr>
+                            {% for value in row[1:] %}
+                                <td contenteditable="true" userdata-id="{{ loop.index }}" userdata-column="{{ loop.index0 }}">{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+        <div class="col-md-5">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4>Search</h4>
+                    <form action="{{ url_for('search') }}" method="GET">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control form-control-sm" placeholder="Search" name="q" value="{{ request.args.get('q', '') }}" style="width: 150px;">
+                            <button class="btn btn-primary btn-sm" type="submit">Search by diagnosis</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-12">
+                    <h4>Delete Row by ID</h4>
+                    <form action="{{ url_for('delete_data') }}" method="POST">
+                        <div class="input-group mb-3">
+                            <input type="number" class="form-control form-control-sm" placeholder="ID" name="data_id" min="1" style="width: 150px;">
+                            <button class="btn btn-danger btn-sm" type="submit">Delete Row</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-12">
+                    <h4>Add Data</h4>
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    <form action="{{ url_for('add_data') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">name</label>
+                            <input type="text" class="form-control form-control-sm" name="patientname">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">age</label>
+                            <input type="text" class="form-control form-control-sm" name="age">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">gender</label>
+                            <input type="text" class="form-control form-control-sm" name="gender">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">doctor</label>
+                            <input type="text" class="form-control form-control-sm" name="doctor">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">illness</label>
+                            <input type="text" class="form-control form-control-sm" name="illness">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Diagnosis</label>
+                            <input type="text" class="form-control form-control-sm" name="diagnosis">
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-primary btn-sm" type="submit">Add Data</button>
+                        </div>
+                    </form>
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const editableCells = document.querySelectorAll('#data-table td[contenteditable=true]');
+
+    editableCells.forEach(cell => {
+        cell.addEventListener('focusout', event => {
+            const id = event.target.dataset.id;
+            const column = event.target.dataset.column;
+            const newValue = event.target.textContent.trim();
+
+            fetch(`{{ url_for('update_data') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id,
+                    column: column,
+                    value: newValue
+                })
+            }).then(response => response.json())
+              .then(data => {
+                if (data.error) {
+                    // Display an error message
+                    alert(data.error);
+                    // Revert the value to its previous state
+                    event.target.textContent = data.oldValue;
+                } else {
+                    // Display a success message or some other visual feedback
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}
