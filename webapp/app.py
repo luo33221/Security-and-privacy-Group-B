@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 12 00:18:58 2023
 
-@author: ericwei
-"""
 
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from flask_bootstrap import Bootstrap
