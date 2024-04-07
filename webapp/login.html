@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+    
+        body {
+            background-color: #74aabc;
+            background-image: url(https://www.gadsbywicks.co.uk/media/_1248x844_crop_center-center_none/Can-I-sue-a-hospital-header_2022-06-23-163251_qqzz.jpg);
+            background-repeat: no-repeat;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 100px;
+        }
+            
+        h1 {
+            text-align: center;
+        }
+            
+        input[type="text"],
+        input[type="password"] {
+            width: 95%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+            
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #64a9d9;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        {% if error %}
+            <p>{{ error }}</p>
+        {% endif %}
+        <form method="post" action="/login">
+            <input type="text" id="username" name="username" required placeholder="Username"><br>
+            <input type="password" id="password" name="password" required placeholder="Password"><br><br>
+            <input type="submit" value="Login" class="button">
+        </form>
+    </div>
+</body>
+</html>
