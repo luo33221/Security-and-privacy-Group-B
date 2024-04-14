@@ -6,7 +6,7 @@ from flask import Flask, request, render_template, redirect, url_for, jsonify
 from flask_bootstrap import Bootstrap
 import pandas as pd
 import mysql.connector
-
+import time
 
 app = Flask(__name__)
 Bootstrap(app)
@@ -20,10 +20,47 @@ db_config = {
 
 
 
+# Define a dictionary to keep track of request counts per IP address
+request_counts = {}
+
+# Define a threshold for maximum requests per minute per IP address
+MAX_REQUESTS_PER_MINUTE = 10
+
+# Define a cooldown period in seconds for each IP address after exceeding the threshold
+COOLDOWN_PERIOD = 30
+
+def is_ip_blocked(ip):
+    """
+    Checks if an IP address is blocked due to exceeding the request limit.
+    """
+    if ip in request_counts:
+        last_request_time = request_counts[ip]["last_request_time"]
+        if time.time() - last_request_time < COOLDOWN_PERIOD:
+            if request_counts[ip]["count"] >= MAX_REQUESTS_PER_MINUTE:
+                print(f"Warning: IP  is blocked due to exceeding the request limit.")
+                return True
+    return False
+
+
 @app.route('/')
 def home():
+    client_ip = request.remote_addr
+
+    if is_ip_blocked(client_ip):
+        return jsonify({"error": "Too many requests. Please try again later."}), 429
+
+    # Update request count for the IP address
+    if client_ip in request_counts:
+        request_counts[client_ip]["count"] += 1
+        request_counts[client_ip]["last_request_time"] = time.time()
+    else:
+        request_counts[client_ip] = {"count": 1, "last_request_time": time.time()}
+
     return render_template('home.html')
 
+
+# Dictionary to store login attempts
+login_attempts = {}
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -31,13 +68,29 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        
+        # Check if there are too many login attempts from this IP
+        ip_address = request.remote_addr
+        if ip_address in login_attempts:
+            if login_attempts[ip_address]['attempts'] >= 3:
+                return render_template('login.html', error='Maximum login attempts reached. Please try again later.'), 429
+        
+        # Validate user credentials
         if validate_user(username, password):
+            # Reset login attempts for this IP if login successful
+            if ip_address in login_attempts:
+                del login_attempts[ip_address]
             return redirect(url_for('data'))
         else:
             error = 'Invalid credentials. Please try again.'
+            # Update login attempts for this IP
+            if ip_address in login_attempts:
+                login_attempts[ip_address]['attempts'] += 1
+                login_attempts[ip_address]['timestamp'] = time.time()
+            else:
+                login_attempts[ip_address] = {'attempts': 1, 'timestamp': time.time()}
             return render_template('login.html', error=error), 401
     return render_template('login.html', error=error)
-
 
 def validate_user(username, password):
     connection = mysql.connector.connect(**db_config)
@@ -95,22 +148,6 @@ def add_user(username, password, email):
     connection.commit()
     connection.close()
 
-'''
-@app.route('/data', methods=['GET'])
-def data():
-    # Connect to the MySQL server
-    connection = mysql.connector.connect(**db_config)
-
-    # Fetch data from the case table
-    query = "SELECT * FROM case;"
-    df  = pd.read_sql_query(query, connection)
-
-    # Close the connection to the MySQL server
-    connection.close()
-
-    # Pass the DataFrame to the template
-    return render_template('data.html', data=df)
-'''
 
 @app.route('/data', methods=['GET'])
 def data():
