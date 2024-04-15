@@ -26,9 +26,11 @@
 
         form {
             background-color: rgba(255, 255, 255, 0.8);
-            padding: 20px;
+            padding: 40px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            max-width: 80%; 
         }
 
         label {
@@ -67,11 +69,13 @@
     </style>
 </head>
 <body>
-    <h2>Register</h2>
-    {% if error %}
-        <p class="error">{{ error }}</p>
-    {% endif %}
     <form method="post" action="/register">
+        <div class="register-header">
+            <h2>Register</h2>
+        </div>
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
         <label for="username">Username:</label><br>
         <input type="text" id="username" name="username" required><br>
         <label for="password">Password:</label><br>
