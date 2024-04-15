@@ -2,13 +2,18 @@
 # -*- coding: utf-8 -*-
 
 
-from flask import Flask, request, render_template, redirect, url_for, jsonify
+from flask import Flask, request, render_template, redirect, url_for, jsonify, session, make_response
 from flask_bootstrap import Bootstrap
 import pandas as pd
 import mysql.connector
 import time
+from PIL import Image, ImageDraw, ImageFont
+import io
+import random
+import string
 
 app = Flask(__name__)
+app.secret_key = '000000'
 Bootstrap(app)
 
 db_config = {
@@ -58,6 +63,9 @@ def home():
 
     return render_template('home.html')
 
+@app.route('/captcha')
+def get_captcha():
+    return captcha()
 
 # Dictionary to store login attempts
 login_attempts = {}
@@ -74,6 +82,13 @@ def login():
         if ip_address in login_attempts:
             if login_attempts[ip_address]['attempts'] >= 3:
                 return render_template('login.html', error='Maximum login attempts reached. Please try again later.'), 429
+            
+        # Check if the entered captcha is correct
+        captcha_entered = request.form.get('captcha')
+        captcha_session = session.get('captcha')
+        if not captcha_session or captcha_entered.lower() != captcha_session.lower():
+            error = 'Invalid captcha. Please try again.'
+            return render_template('login.html', error=error), 401
         
         # Validate user credentials
         if validate_user(username, password):
@@ -90,7 +105,51 @@ def login():
             else:
                 login_attempts[ip_address] = {'attempts': 1, 'timestamp': time.time()}
             return render_template('login.html', error=error), 401
-    return render_template('login.html', error=error)
+        
+    # Generate and display captcha
+    text = ''.join(random.choice(string.ascii_letters) for i in range(4))
+    session['captcha'] = text
+    image = generate_captcha(text)
+    captcha_image = make_response(image.getvalue())
+    captcha_image.headers['Content-Type'] = 'image/png'
+
+    return render_template('login.html', error=error, captcha_image=captcha_image)
+
+def generate_captcha(text):
+    image = Image.new('RGB', (200, 100), color = (255, 255, 255))
+    
+    font = ImageFont.truetype('arial.ttf', 50)
+    
+    draw = ImageDraw.Draw(image)
+
+    for i, char in enumerate(text):
+        color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        draw.text((20 + i * 40, 25), char, font=font, fill=color)
+
+    for _ in range(10):
+        start_point = (random.randint(0, 200), random.randint(0, 100))
+        end_point = (random.randint(0, 200), random.randint(0, 100))
+        draw.line([start_point, end_point], fill=(0, 0, 0), width=2)
+    
+    draw.text((50, 25), text, font=font, fill=(0, 0, 0))
+    
+    image_byte_arr = io.BytesIO()
+    image.save(image_byte_arr, format='PNG')
+    image_byte_arr.seek(0)
+    
+    return image_byte_arr
+
+def captcha():
+    #generate random code
+    text = ''.join(random.choice(string.ascii_letters) for i in range(4))
+    
+    # get captcha image
+    image = generate_captcha(text)
+
+    response = make_response(image.getvalue())
+    response.headers['Content-Type'] = 'image/png'
+    
+    return response
 
 def validate_user(username, password):
     connection = mysql.connector.connect(**db_config)
@@ -100,8 +159,7 @@ def validate_user(username, password):
     user = cursor.fetchone()
     connection.close()
     return user is not None
-
-
+    
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     error = None
