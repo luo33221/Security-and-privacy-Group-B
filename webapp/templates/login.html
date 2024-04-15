@@ -80,10 +80,32 @@
         <input type="password" id="password" name="password" required><br><br>
 
         <img src="/captcha" alt="captcha"><br>
+        <a href="#" id="refreshCaptcha">Can't read? Refresh</a>
         <label for="captcha">Enter the captcha:</label><br>
         <input type="text" id="captcha" name="captcha" required><br><br>
 
         <button type="submit">Login</button>
     </form>
+    <script>
+        document.getElementById('refreshCaptcha').addEventListener('click', function(event) {
+            event.preventDefault(); 
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // update captcha image
+                        var captchaImage = document.querySelector('img');
+                        captchaImage.src = URL.createObjectURL(xhr.response);
+                    } else {
+                        console.error('Failed to refresh captcha');
+                    }
+                }
+            };
+            xhr.open('GET', '/refresh-captcha');
+            xhr.responseType = 'blob';
+            xhr.send();
+        });
+    </script>
 </body>
 </html>
