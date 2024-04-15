@@ -67,6 +67,15 @@ def home():
 def get_captcha():
     return captcha()
 
+@app.route('/refresh-captcha')
+def refresh_captcha():
+    text = ''.join(random.choice(string.ascii_letters) for i in range(4))
+    session['captcha'] = text
+    image = generate_captcha(text)
+    captcha_image = make_response(image.getvalue())
+    captcha_image.headers['Content-Type'] = 'image/png'
+    return captcha_image
+
 # Dictionary to store login attempts
 login_attempts = {}
 
